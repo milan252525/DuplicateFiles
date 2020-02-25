@@ -1,9 +1,9 @@
-import os #working with file system
-import json #saving dict into json
+import os 
+import json
 from datetime import datetime
 from time import time 
 import argparse #parsing cli arguments
-from sys import exit #exiting on error
+from sys import exit
 import hashlib #hashing file content
 
 LENGTH_TO_READ = 65536 #64KB
@@ -45,8 +45,7 @@ def dir_to_dict(original_path: str, size: bool, date: bool, name: bool, content:
                             #file size in bytes
                             dict_path.append(f"{stats.st_size}B")
                         if date:
-                            #Windows - date of creation
-                            #Unix - date of the most recent change
+                            #Windows - date of creation, Unix - date of the most recent change
                             #timestamp to to string, int()to omit milliseconds
                             dict_path.append(datetime.fromtimestamp(int(stats.st_ctime)).strftime('%Y_%m_%d %H:%M'))
 
@@ -58,14 +57,12 @@ def dir_to_dict(original_path: str, size: bool, date: bool, name: bool, content:
                             part.setdefault(key, {})
                             #recursivily dive into the dictionary
                             part = part[key]
-                        #if the last key does not exist make an array with path to the entry
+                        #place file paths into dictionary
                         if dict_path[-1] not in part:
                             part[dict_path[-1]] = [entry.path]
-                        #if it exists append to the list
                         else:
                             part[dict_path[-1]].append(entry.path)
-                    #if entry is directory recursively scan it
-                    #if entry is symbolic link skip it (may cause infinite loop)
+                    #if entry is directory recursively scan it, skip links
                     elif entry.is_dir() and not entry.is_symlink():
                         scan_dir(entry.path)
         #user may not have permissions to access the directory
@@ -89,7 +86,7 @@ def find_duplicates(dictionary: dict, size: bool, date: bool, name: bool, conten
     def recursion(dictionary, key_path):
         #loop over every key and value in the dictionary
         for key, value in dictionary.items():
-            #if the value isn't keep user recursion on it
+            #if the value isn't list keep using recursion on it
             if not isinstance(value, list):
                 recursion(value, (key_path + (' ' if len(key_path) > 0 else '') + str(key)))
             #if the value is list, check for duplicates
@@ -98,23 +95,32 @@ def find_duplicates(dictionary: dict, size: bool, date: bool, name: bool, conten
                 if len(value)>1:
                     text = ""
                     if not content:
+                        #identical properties
                         text += f"[{len(value)}]{key_path}{' ' if len(key_path) > 0 else ''}{str(key)}\n"
                         for item in value:
+                            #file paths
                             text += f" - {item}\n"
+                    #if looking for identical content, compare hashes of files with the rest of properties identical
                     else:
                         hashes = {}
                         for item in value:
+                            #hash file
                             hash = hash_file(item)
+                            #file error
                             if hash == "":
                                 continue
+                            #place hashes into dictionary
                             if hash not in hashes:
                                 hashes[hash] = [item]
                             else:
                                 hashes[hash].append(item)
+                        #look for duplicate hashes
                         for file_hash, file_paths in hashes.items():
                             if len(file_paths) > 1:
+                                #identical properties
                                 text += f"[{len(file_paths)}]{key_path}{' ' if len(key_path) > 0 else ''}{str(key)}\n"
                                 for p in file_paths:
+                                    #file paths
                                     text += f" - {p}\n"
                     if output is not None:
                         output_file.write(text)
@@ -181,7 +187,3 @@ if __name__ == "__main__":
     find_duplicates(scanned, args.size, args.date, args.name, args.content, args.file)
     #print how long the program took
     print(f"Completed in: {'%.5f'%(time() - start)}s") #5 decimals
-
-
-
-
