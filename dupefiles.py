@@ -1,3 +1,7 @@
+#Duplicitní soubory - zápočtový program
+#Milan Abrahám
+#NPRG030 Programování I
+
 import os 
 import json
 from datetime import datetime
@@ -10,10 +14,10 @@ LENGTH_TO_READ = 65536 #64KB
 
 #function for hashing file content into SHA3-256
 def hash_file(path: str):
-    hash = hashlib.sha3_256()
+    hash = hashlib.sha256()
     try:
         with open(path, "rb") as file:
-            fb = file.read(LENGTH_TO_READ) #64KB
+            fb = file.read(LENGTH_TO_READ)
             while len(fb) > 0:
                 hash.update(fb)
                 fb = file.read(LENGTH_TO_READ)
@@ -171,7 +175,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     #check for missing arguments
     if not args.size and not args.date and not args.name and not args.content:
-        print("ERROR: Please use arguments to set what file properties to scan. Use NAMEHERE.py -h for more info.")
+        print("ERROR: Please use arguments to set what file properties to scan. Use dupefiles.py -h for more info.")
         exit()
     #start time
     start = time()
